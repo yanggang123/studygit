@@ -1,0 +1,9 @@
+---
+- name: restart nginx service
+  gather_facts: False
+  hosts: "{{ host }}"
+  user: root
+  tasks:
+    - name: restart nginx Service
+      service: name=nginx state=restarted
+

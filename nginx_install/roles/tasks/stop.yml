@@ -1,0 +1,9 @@
+---
+- name: stop nginx service
+  gather_facts: False
+  hosts: "{{ host }}"
+  user: root
+  tasks:
+    - name: stop nginx Service
+      service: name=nginx state=stopped
+

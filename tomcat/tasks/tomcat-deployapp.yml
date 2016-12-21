@@ -1,0 +1,38 @@
+---
+- name: deploy app to remote server 
+  gather_facts: False
+  hosts: "{{ host }}"
+  user: "{{ user|default('root') }}"
+  
+  vars:
+    tomcat_home: "{{ tomcat_home }}"
+    app_new: "{{ tomcat_home }}/newfile"
+    app_bak: "{{ tomcat_home }}/oldfile"
+    project_name: 
+    url:
+
+
+  tasks:
+    - name: Create the dir
+      file: path={{ item }} state=directory
+      with_items:
+        - "{{ tomcat_home }}/newfile"
+        - "{{ tomcat_home }}/oldfile"
+    - name: Download app
+      get_url: url={{ url }} dest={{ tomcat_home }}/newfile/{{ project_name }}.war
+    - name: Stop the tomcat service
+      action: shell ps -ef |grep java |grep -v grep |tr -s " " |cut -d " " -f2 |xargs kill -9
+      ignore_errors: yes
+    - name: Backup the old app to /geelyapp/tomcat-{{ project_name }}/oldfile folder
+      shell: removes={{ tomcat_home }}/webapps/{{ project_name }}.war mv {{ tomcat_home }}/webapps/{{ project_name }}.war {{ tomcat_home }}/oldfile
+    - name: delete the old project.
+      file: path={{ tomcat_home }}/webapps/{{ project_name }}* state=absent
+    - name: Clean tomcat cache.
+      file: path={{ tomcat_home }}/work/Catalina state=absent
+      ignore_errors: yes
+    - name: deploy the new.
+      shell: mv {{ tomcat_home }}/newfile/{{ project_name }}.war {{ tomcat_home }}/webapps/
+    - name: Start tomcat service.
+      shell: nohup {{ tomcat_home }}/bin/startup.sh & 
+      register: command_result
+      failed_when: "'not' in command_result.stderr"

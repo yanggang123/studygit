@@ -1,0 +1,14 @@
+---
+- name: start the remote server app
+  gather_facts: False
+  hosts: "{{ host }}"
+#  user: "{{ user|default('root') }}"
+
+  tasks:
+    - name: Clean tomcat cache.
+      file: path={{ tomcat_home }}/work/Catalina state=absent
+      ignore_errors: yes
+    - name: Start tomcat service.
+      shell: nohup {{ tomcat_home }}/bin/startup.sh &
+      register: command_result
+      failed_when: "'not' in command_result.stderr"

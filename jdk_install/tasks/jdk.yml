@@ -1,0 +1,34 @@
+---
+- name: JDK install and configuration
+  hosts: '{{ host }}'
+#  user: "{{ user|default('root') }}"
+  
+  tasks:
+    - name: remove the openjdk
+      yum: name=*-openjdk-* state=absent
+    - name: remove the gcj
+      yum: name=*gcj* state=absent
+    - name: set the JAVA_HOME environment
+      lineinfile: dest=/etc/profile regexp="^JAVA_HOME=" line="JAVA_HOME=/usr/local/java"
+    - name: set the PATH environment
+      lineinfile: dest=/etc/profile regexp="^PATH=\$PATH:\$JAVA_HOME" line="PATH=$PATH:$JAVA_HOME/bin"
+    - name: set the CLASSPATH environment
+      lineinfile: dest=/etc/profile regexp="^CLASSPATH=" line="CLASSPATH=$JAVA_HOME/lib/dt.jar:$JAVA_HOME/lib/tools.jar:$JAVA_HOME/lib/sapjco3.jar"
+    - name: set the JRE_HOME environment
+      lineinfile: dest=/etc/profile regexp="^JRE_HOME" line="JRE_HOME=$JAVA_HOME/jre"
+    - name: set the LD_LIBRARY_PATH environment
+      lineinfile: dest=/etc/profile regexp="^LD_LIBRARY_PATH" line="LD_LIBRARY_PATH=dir:$LD_LIBRARY_PATH:$JAVA_HOME/jre/lib/amd64/server"
+    - name: export the JAVA_HOME LD_LIBRARY_PATH PATH
+      lineinfile: dest=/etc/profile regexp="^export JAVA_HOME" line="export JAVA_HOME LD_LIBRARY_PATH PATH"
+    - name: config the sap to /etc/services
+      lineinfile: dest=/etc/services regexp="^sapgw00" line="sapgw00         3301/tcp"
+    - name: config the sap to /etc/services
+      lineinfile: dest=/etc/services regexp="^sapgw01" line="sapgw01         3301/tcp"
+    - name: download the jdk to remote host
+      get_url: url=http://10.86.87.142/evunsoft/{{ jdk_version }}.tar.gz dest=/usr/local/src/
+    - name: absent old java
+      file: path=/usr/local/java state=absent
+    - name: install the jdk
+      shell: cd /usr/local/src && tar xzf "{{ jdk_version }}".tar.gz -C /usr/local/ 
+    - name: link the jdkdir to java
+      file: src=/usr/local/{{ jdk_version }} dest=/usr/local/java state=link force=yes

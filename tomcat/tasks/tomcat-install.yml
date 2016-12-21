@@ -1,0 +1,29 @@
+---
+- name: Tomcat install and configuration
+  hosts: "{{ host }}"
+  user: root
+  
+  tasks:
+    - name: absent old tomcat
+      file: path={{ item }} state=absent
+      with_items:
+        - "{{ tomcat_home }}"
+        - /geelyapp/auto_scripts/tomcat.sh
+    - name: get tomcat_tar_gz
+      get_url: url={{ url }} dest=/tmp/tomcat.tar.gz
+    - name: Create the dir
+      file: path={{ item }} state=directory
+      with_items:
+        - /geelyapp/gc_log
+        - /geelyapp/auto_scripts
+        - "{{ tomcat_home }}"
+    - name: tar xzf tomcat_tar_gz
+      unarchive: src=/tmp/tomcat.tar.gz dest={{ tomcat_home }} copy=no
+    - name: init server.xml
+      template: src=/ansible/roles/tomcat/templates/server.xml.j2 dest={{ tomcat_home }}/conf/server.xml
+    - name: init setenv.sh
+      template: src=/ansible/roles/tomcat/templates/setenv.sh.j2 dest={{ tomcat_home }}/bin/setenv.sh mode=0755
+    - name: init the tomcat maintain script
+      template: src=/ansible/roles/tomcat/templates/tomcat.sh.j2 dest=/geelyapp/auto_scripts/tomcat.sh mode=0755
+    - name: change owner tomcat and scripts to {{ user|default('root') }}
+      file: path={{ tomcat_home }} owner={{ user|default('root') }} group={{ user|default('root') }} recurse=yes

@@ -1,0 +1,9 @@
+---
+- include: tomcat/tasks/tomcat-install.yml
+  tags: install
+- include: tomcat/tasks/tomcat-stop.yml
+  tags: [ stop, restart ]
+- include: tomcat/tasks/tomcat-start.yml
+  tags: [ start, restart ]
+- include: tomcat/tasks/tomcat-deployapp.yml
+  tags: deploy

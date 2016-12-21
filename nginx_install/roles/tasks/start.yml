@@ -1,0 +1,9 @@
+---
+- name: start nginx service
+  gather_facts: False
+  hosts: "{{ host }}"
+  user: root
+  tasks:
+    - name: start nginx Service
+      service: name=nginx state=started
+

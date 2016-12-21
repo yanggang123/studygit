@@ -1,0 +1,20 @@
+---
+- name: start redis service
+  gather_facts: False
+  hosts: "{{ host }}"
+  user: root
+  tasks:
+    - name: start redis Service
+#      service: name=redis-{{ port|default('6379') }} state=started
+  #    service: name=redis-6379 state=started
+      action: shell /etc/init.d/redis-{{ port|default('6379') }} start -force 
+      register: re
+      failed_when: "'not' in re.stderr"
+
+
+
+
+
+
+
+

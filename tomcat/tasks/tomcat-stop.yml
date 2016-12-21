@@ -1,0 +1,11 @@
+---
+- name: stop the remote server app
+  gather_facts: False
+  hosts: "{{ host }}"
+# user: "{{ user|default('root') }}"
+
+  tasks:
+    - name: Stop the tomcat service
+#     action: shell /geelyapp/auto_scripts/tomcat.sh stop -force
+      action: shell ps -fe | grep {{ tomcat_home }} |grep {{ java_home|default('/usr/local/java')}} | grep -v grep | tr -s " "|cut -d" " -f2 |xargs kill -9
+      ignore_errors: yes

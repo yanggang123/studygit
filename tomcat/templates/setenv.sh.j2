@@ -1,0 +1,11 @@
+export JAVA_HOME={{ java_home|default('/usr/local/java') }}
+export PATH=$JAVA_HOME/bin:$PATH
+export CLASSPATH=.:$JAVA_HOME/lib/dt.jar:$JAVA_HOME/lib/tools.jar:$JAVA_HOME/lib/sapjco3.jar
+export JRE_HOME=$JAVA_HOME/jre
+export LD_LIBRARY_PATH=dir:$LD_LIBRARY_PATH:$JAVA_HOME/jre/lib/amd64/server
+
+JAVA_OPTS="-server -Xms{{ ansible_memtotal_mb//2 }}m -Xmx{{ ansible_memtotal_mb//2 }}m -Xmn{{ ansible_memtotal_mb//8 }}m -XX:PermSize=256m -XX:MaxPermSize=512m -Djava.awt.headless=true -XX:+DisableExplicitGC -XX:MaxTenuringThreshold=16 -XX:+UseConcMarkSweepGC -XX:ParallelCMSThreads=9 -XX:CMSInitiatingOccupancyFraction=70 -verbose:gc -XX:+PrintGCDateStamps -XX:+PrintGCDetails -Xloggc:/geelyapp/gc_log/{{ project_name|default('test') }}_gclog$(date +%Y%m%d-%H%M).log -XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=/geelyapp/gc_log/"
+
+CATALINA_OPTS="$CATALINA_OPTS -Dcom.sun.management.jmxremote -Dcom.sun.management.jmxremote.port={{ jmx_port|default(7091) }} -Dcom.sun.management.jmxremote.ssl=false -Dcom.sun.management.jmxremote.authenticate=false -Djava.rmi.server.hostname={{ ansible_default_ipv4['address'] }}"
+
+export CATALINA_HOME={{ tomcat_home }}

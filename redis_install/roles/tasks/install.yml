@@ -1,0 +1,54 @@
+---
+- name: install redis app
+  gather_facts: False
+  hosts: "{{ host }}"
+  user: root
+  tasks:
+    - name: download redis install package
+     # get_url: url=http://10.86.87.142/evunsoft/redis/redis-{{ redis_version|default('3.2.0') }}.tar.gz dest=/tmp/
+      get_url: url={{ url }} dest=/tmp/redis-{{ port }}.tar.gz 
+
+    - name: create redis dir
+      file: path=/opt/redis-{{ port }} state=directory
+
+    - name: unarchive redis package
+      unarchive: src=/tmp/redis-{{ port }}.tar.gz dest=/opt/redis-{{ port }} copy=no 
+
+    - name: copy redis start script 
+      template: src=../templates/redis.j2 dest=/etc/init.d/ owner=root group=root mode=0755
+
+    - name: rename redis script
+      shell: removes=/etc/init.d/redis.j2 mv /etc/init.d/redis.j2 /etc/init.d/redis-{{ port }}
+
+    - name: create redis config directory
+      file: path=/etc/redis state=directory
+
+    - name: copy redis config
+      template: src=../templates/redis.conf.j2 dest=/etc/redis/ owner=root group=root mode=0644
+
+    - name: rename redis config file
+      shell: removes=/etc/redis/redis.conf.j2 mv /etc/redis/redis.conf.j2 /etc/redis/redis-{{ port }}.conf 
+ 
+    - name: compile redis
+      shell: cd /opt/redis-{{ port }} && make PREFIX={{ path }} install >> /dev/null 2>&1
+
+    - name: add boot start redis service
+      shell: chkconfig --level 345 redis-{{ port }} on
+
+    - name: create rdb dir
+      file: path={{ path }}/{{ port }}/data state=directory
+
+    - name: start redis Service
+#     service: name=redis-{{ port|default('6379') }} state=restarted
+      action: shell /etc/init.d/redis-{{ port }} start -force 
+
+    - name: del redis compression and redis decompression
+      file: path={{ item }} state=absent
+      with_items:
+        - /tmp/redis-{{ port }}.tar.gz
+        - /opt/redis-{{ port }}
+
+
+
+
+

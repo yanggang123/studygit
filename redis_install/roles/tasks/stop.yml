@@ -1,0 +1,16 @@
+---
+- name: start redis service
+  gather_facts: False
+  hosts: "{{ host }}"
+  user: root
+  tasks:
+    - name: start redis Service
+      service: name=redis-{{ port|default('6379') }} state=stopped
+
+
+
+
+
+
+
+

@@ -1,0 +1,87 @@
+---
+- name: install nginx
+  gather_facts: False
+  hosts: "{{ host }}"
+  user: root
+  tasks:
+    - name: install require rpm packages
+      yum: name={{ item }} state=installed
+      with_items:
+        - gcc
+        - gcc-*
+        - autoconf
+        - libtool
+        - make
+        - zlib
+        - zlib-devel
+        - glibc-*
+        - tcl
+        - unzip 
+
+    - name: download nginx package
+#   'url'='http://mon.evun.cn/evunsoft/nginx-1.9.3/nginx-1.9.3.tar.gz'
+      get_url: url={{ url }} dest=/tmp/nginx.tar.gz
+
+    - name: create nginx compile directory
+      file: path=/opt/nginx state=directory
+
+    - name: unarchive nginx package
+      unarchive: src=/tmp/nginx.tar.gz dest=/opt/nginx copy=no
+
+    - name: unarchive dependent packages
+      unarchive: src=/ansible-playbook/nginx_revise/roles/files/{{ item }} dest=/opt/ copy=no
+      ignore_errors: yes
+      with_items:
+        - nginx-goodies-nginx-sticky-module.tar.gz 
+        - nginx_upstream_check_module-master.tar.gz
+        - openssl-1.0.1c.tar.gz  
+        - pcre-8.36.tar.gz  
+        - zlib-1.2.8.tar.gz
+
+    - name: create nginx boot user
+      user: name={{ user }} shell=/sbin/nologin
+      ignore_errors: yes     
+
+    - name: compile and install nginx
+      shell: cd /opt/nginx && 
+             ./configure --prefix={{ path }}
+                         --user={{ user }}
+                         --group={{ user }}
+                         --add-module=/opt/nginx_upstream_check_module-master 
+                         --with-pcre=/opt/pcre-8.36 
+                         --with-zlib=/opt/zlib-1.2.8 
+                         --with-openssl=/opt/openssl-1.0.1c 
+                         --with-http_stub_status_module 
+                         --with-http_realip_module
+                         --with-http_gzip_static_module
+                         --with-http_ssl_module 
+                         {{compiler_parameters|default('')}} >> /dev/null 2>&1 &&
+             make && 
+             make install
+
+    - name: copy nginx.conf
+      template: src=../templates/nginx.conf.j2 dest={{ path }}/conf/nginx.conf owner=root group=root mode=0644
+
+    - name: copy nginx scripts
+      template: src=../templates/nginx dest=/etc/init.d/nginx owner=root group=root mode=0755
+
+    - name: add boot start nginx service
+      shell: chkconfig --level 345 nginx on
+
+    - name: start nginx service
+      service: name=nginx state=started
+     
+    - name: delete all nginx installation package dir
+      file: path=/opt/{{ item }} state=absent
+      ignore_errors: yes
+      with_items:
+        - nginx-tar.gz
+        - nginx-goodies-nginx-sticky-module
+        - nginx_upstream_check_module-master
+        - openssl-1.0.1c
+        - pcre-8.36
+        - zlib-1.2.8
+
+
+
+
